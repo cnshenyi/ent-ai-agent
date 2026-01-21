@@ -144,9 +144,11 @@ export default function Home() {
           <div className="space-y-4">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-3 rounded-lg ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white shadow prose prose-sm'}`}>
+                <div className={`max-w-[80%] p-3 rounded-lg ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white shadow'}`}>
                   {msg.role === 'assistant' ? (
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    <div className="prose prose-sm max-w-none">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
                   ) : (
                     msg.content
                   )}
