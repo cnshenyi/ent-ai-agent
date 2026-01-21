@@ -4,21 +4,21 @@ export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
 
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        'Authorization': `Bearer ${process.env.DOUBAO_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: process.env.DOUBAO_MODEL_ID || 'ep-20250121184143-xxxxx',
         stream: true,
         messages: [
           {
             role: 'system',
             content: '你是许庚医生，从业30年的耳鼻喉科专家。像朋友聊天一样回答患者，语气亲切自然。要求：1)直接说重点，就像面对面交流 2)一次只说2-3句话 3)可以用"嗯"、"这样啊"等口语词 4)不要用列表、序号，就像说话一样自然表达 5)严重的建议来院看看',
           },
-          ...messages.map((m: any) => ({ role: m.role, content: m.content })),
+          ...messages,
         ],
       }),
     });
