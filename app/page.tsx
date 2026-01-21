@@ -169,7 +169,15 @@ export default function Home() {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <header className="bg-blue-600 text-white p-4 shadow-md">
-        <h1 className="text-xl font-bold text-center">许庚医生 - 耳鼻喉AI助手</h1>
+        <div className="flex items-center justify-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl">
+            👨‍⚕️
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">许根医生</h1>
+            <p className="text-sm opacity-90">耳鼻喉科专家 · 从业30年</p>
+          </div>
+        </div>
       </header>
 
       <nav className="flex bg-white border-b">

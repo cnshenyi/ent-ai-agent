@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
         'Authorization': `Bearer ${process.env.DOUBAO_API_KEY}`,
       },
       body: JSON.stringify({
-        model: process.env.DOUBAO_MODEL_ID || 'ep-20250121184143-xxxxx',
+        model: process.env.DOUBAO_MODEL_ID,
         stream: true,
         messages: [
           {
@@ -22,6 +22,11 @@ export async function POST(req: NextRequest) {
         ],
       }),
     });
+
+    if (!response.ok) {
+      console.error('API Error:', response.status, await response.text());
+      return new Response('API调用失败', { status: 500 });
+    }
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -48,7 +53,9 @@ export async function POST(req: NextRequest) {
                   if (content) {
                     controller.enqueue(encoder.encode(content));
                   }
-                } catch (e) {}
+                } catch (e) {
+                  console.error('Parse error:', e);
+                }
               }
             }
           }
@@ -63,6 +70,7 @@ export async function POST(req: NextRequest) {
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
   } catch (error) {
+    console.error('Server error:', error);
     return new Response('服务暂时不可用', { status: 500 });
   }
 }
