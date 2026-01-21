@@ -170,11 +170,9 @@ export default function Home() {
     <div className="flex flex-col h-screen bg-gray-50">
       <header className="bg-blue-600 text-white p-4 shadow-md">
         <div className="flex items-center justify-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl">
-            👨‍⚕️
-          </div>
+          <img src="https://img1.dxycdn.com/2021/1228/997/0828727527046333253-126.png" alt="许庚医生" className="w-12 h-12 rounded-full object-cover" />
           <div>
-            <h1 className="text-xl font-bold">许根医生</h1>
+            <h1 className="text-xl font-bold">许庚医生</h1>
             <p className="text-sm opacity-90">耳鼻喉科专家 · 从业30年</p>
           </div>
         </div>
