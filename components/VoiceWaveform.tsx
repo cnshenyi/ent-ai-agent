@@ -132,7 +132,7 @@ export default function VoiceWaveform({ isActive, audioStream, onStop }: VoiceWa
   return (
     <button
       onClick={onStop}
-      className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-950 to-blue-900 dark:from-gray-950 dark:to-gray-900 rounded-xl px-4 border-2 border-blue-500 dark:border-blue-600 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-all relative overflow-hidden"
+      className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 border-2 border-blue-400 dark:border-blue-600 cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-all relative overflow-hidden"
       style={{ height: '44px' }}
       title="点击结束录音"
     >
