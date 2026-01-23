@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
 interface VoiceWaveformProps {
   isActive: boolean;
   audioStream: MediaStream | null;
+  onStop: () => void;
 }
 
-export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformProps) {
+export default function VoiceWaveform({ isActive, audioStream, onStop }: VoiceWaveformProps) {
   const [volume, setVolume] = useState(0.3);
 
   useEffect(() => {
@@ -92,14 +93,19 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
   if (!isActive) return null;
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 py-3 border-2 border-blue-400 dark:border-blue-600">
-      <div className="relative flex items-center justify-center" style={{ width: '80px', height: '80px' }}>
+    <button
+      onClick={onStop}
+      className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 border-2 border-blue-400 dark:border-blue-600 cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
+      style={{ height: '44px' }}
+      title="点击结束录音"
+    >
+      <div className="relative flex items-center justify-center" style={{ width: '60px', height: '40px' }}>
         {/* Outer pulsing ring */}
         <div
           className="absolute rounded-full bg-blue-500/20 transition-all duration-100"
           style={{
-            width: `${60 + volume * 40}px`,
-            height: `${60 + volume * 40}px`,
+            width: `${30 + volume * 20}px`,
+            height: `${30 + volume * 20}px`,
           }}
         />
 
@@ -107,8 +113,8 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
         <div
           className="absolute rounded-full bg-blue-500/30 transition-all duration-100"
           style={{
-            width: `${50 + volume * 30}px`,
-            height: `${50 + volume * 30}px`,
+            width: `${24 + volume * 16}px`,
+            height: `${24 + volume * 16}px`,
           }}
         />
 
@@ -116,8 +122,8 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
         <div
           className="absolute rounded-full bg-blue-500/40 transition-all duration-100"
           style={{
-            width: `${40 + volume * 20}px`,
-            height: `${40 + volume * 20}px`,
+            width: `${18 + volume * 12}px`,
+            height: `${18 + volume * 12}px`,
           }}
         />
 
@@ -125,29 +131,12 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
         <div
           className="absolute rounded-full bg-blue-600 shadow-lg transition-all duration-100"
           style={{
-            width: `${30 + volume * 10}px`,
-            height: `${30 + volume * 10}px`,
-            boxShadow: `0 0 ${volume * 20}px rgba(59, 130, 246, 0.6)`,
+            width: `${12 + volume * 8}px`,
+            height: `${12 + volume * 8}px`,
+            boxShadow: `0 0 ${volume * 12}px rgba(59, 130, 246, 0.6)`,
           }}
         />
-
-        {/* Microphone icon */}
-        <svg
-          className="relative z-10 text-white"
-          width="20"
-          height="20"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-          />
-        </svg>
       </div>
-    </div>
+    </button>
   );
 }
