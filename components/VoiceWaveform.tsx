@@ -8,7 +8,7 @@ interface VoiceWaveformProps {
 }
 
 export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformProps) {
-  const [bars, setBars] = useState<number[]>(Array(20).fill(0.3));
+  const [bars, setBars] = useState<number[]>(Array(60).fill(0.3));
 
   useEffect(() => {
     if (!audioStream || !isActive) return;
@@ -25,7 +25,7 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
         console.log('AudioContext not supported, using fallback animation');
         // Fallback: simple animation without audio analysis
         const animate = () => {
-          setBars(prev => prev.map(() => 0.2 + Math.random() * 0.8));
+          setBars(prev => prev.map(() => 0.3 + Math.random() * 0.7));
           animationId = requestAnimationFrame(animate);
         };
         animate();
@@ -38,8 +38,8 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
       analyser = audioContext.createAnalyser();
       const source = audioContext.createMediaStreamSource(audioStream);
 
-      analyser.fftSize = 64;
-      analyser.smoothingTimeConstant = 0.8;
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.7;
       source.connect(analyser);
 
       const bufferLength = analyser.frequencyBinCount;
@@ -51,11 +51,11 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
         analyser.getByteFrequencyData(dataArray);
 
         // Convert frequency data to bar heights with more variation
-        const newBars = Array(20).fill(0).map((_, i) => {
-          const index = Math.floor((i / 20) * bufferLength);
+        const newBars = Array(60).fill(0).map((_, i) => {
+          const index = Math.floor((i / 60) * bufferLength);
           const value = dataArray[index] || 0;
-          // Increase sensitivity and range for more prominent effect
-          return Math.min(1, (value / 255) * 1.5 + 0.15);
+          // Increase sensitivity and range for more prominent waveform effect
+          return Math.min(1, (value / 255) * 2.5 + 0.2);
         });
 
         setBars(newBars);
@@ -71,7 +71,7 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
           console.error('Failed to resume AudioContext:', err);
           // Fallback animation with more variation
           const animate = () => {
-            setBars(prev => prev.map(() => 0.15 + Math.random() * 0.85));
+            setBars(prev => prev.map(() => 0.2 + Math.random() * 0.8));
             animationId = requestAnimationFrame(animate);
           };
           animate();
@@ -84,7 +84,7 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
       console.error('Error setting up audio visualization:', error);
       // Fallback: animation with more variation
       const animate = () => {
-        setBars(prev => prev.map(() => 0.15 + Math.random() * 0.85));
+        setBars(prev => prev.map(() => 0.2 + Math.random() * 0.8));
         animationId = requestAnimationFrame(animate);
       };
       animate();
@@ -103,17 +103,17 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
   if (!isActive) return null;
 
   return (
-    <div className="flex-1 flex items-center justify-center gap-1 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 py-3 border-2 border-blue-400 dark:border-blue-600">
+    <div className="flex-1 flex items-center justify-center gap-0.5 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 py-3 border-2 border-blue-400 dark:border-blue-600">
       {bars.map((height, i) => (
         <div
           key={i}
-          className="flex-1 rounded-full transition-all duration-75"
+          className="flex-1 rounded-sm transition-all duration-50"
           style={{
             height: `${height * 100}%`,
-            maxHeight: '48px',
-            minHeight: '4px',
-            background: '#3B82F6', // Single blue color
-            boxShadow: height > 0.6 ? '0 0 8px rgba(59, 130, 246, 0.6)' : 'none',
+            maxHeight: '56px',
+            minHeight: '6px',
+            background: 'linear-gradient(to top, #2563EB, #3B82F6, #60A5FA)',
+            boxShadow: height > 0.7 ? '0 0 10px rgba(59, 130, 246, 0.8)' : 'none',
           }}
         />
       ))}
