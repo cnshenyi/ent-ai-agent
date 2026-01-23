@@ -92,51 +92,45 @@ export default function VoiceWaveform({ isActive, audioStream, onStop }: VoiceWa
 
   if (!isActive) return null;
 
+  // Create multiple circles distributed across the width
+  const circles = Array.from({ length: 8 }, (_, i) => {
+    const baseSize = 8 + i * 2;
+    const size = baseSize + volume * (12 + i * 2);
+    const opacity = 0.15 + volume * 0.3 - i * 0.02;
+    return { size, opacity };
+  });
+
   return (
     <button
       onClick={onStop}
-      className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 border-2 border-blue-400 dark:border-blue-600 cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
-      style={{ height: '44px' }}
+      className="flex-1 flex items-center justify-center gap-3 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 border-2 border-blue-400 dark:border-blue-600 cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-all relative overflow-hidden"
+      style={{
+        height: '44px',
+        boxShadow: `0 0 ${volume * 20}px rgba(59, 130, 246, ${volume * 0.3})`
+      }}
       title="点击结束录音"
     >
-      <div className="relative flex items-center justify-center" style={{ width: '60px', height: '40px' }}>
-        {/* Outer pulsing ring */}
-        <div
-          className="absolute rounded-full bg-blue-500/20 transition-all duration-100"
-          style={{
-            width: `${30 + volume * 20}px`,
-            height: `${30 + volume * 20}px`,
-          }}
-        />
+      {/* Background pulse effect */}
+      <div
+        className="absolute inset-0 bg-blue-400/10 dark:bg-blue-500/10 transition-all duration-100"
+        style={{
+          opacity: volume * 0.5,
+        }}
+      />
 
-        {/* Middle pulsing ring */}
+      {/* Distributed circles */}
+      {circles.map((circle, i) => (
         <div
-          className="absolute rounded-full bg-blue-500/30 transition-all duration-100"
+          key={i}
+          className="rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-100"
           style={{
-            width: `${24 + volume * 16}px`,
-            height: `${24 + volume * 16}px`,
+            width: `${circle.size}px`,
+            height: `${circle.size}px`,
+            opacity: circle.opacity,
+            boxShadow: volume > 0.6 ? `0 0 ${volume * 8}px rgba(59, 130, 246, 0.4)` : 'none',
           }}
         />
-
-        {/* Inner pulsing ring */}
-        <div
-          className="absolute rounded-full bg-blue-500/40 transition-all duration-100"
-          style={{
-            width: `${18 + volume * 12}px`,
-            height: `${18 + volume * 12}px`,
-          }}
-        />
-
-        {/* Center circle */}
-        <div
-          className="absolute rounded-full bg-blue-600 shadow-lg transition-all duration-100"
-          style={{
-            width: `${12 + volume * 8}px`,
-            height: `${12 + volume * 8}px`,
-            boxShadow: `0 0 ${volume * 12}px rgba(59, 130, 246, 0.6)`,
-          }}
-        />
-      </div>
+      ))}
     </button>
   );
 }
