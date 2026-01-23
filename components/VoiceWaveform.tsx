@@ -8,7 +8,7 @@ interface VoiceWaveformProps {
 }
 
 export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformProps) {
-  const [bars, setBars] = useState<number[]>(Array(60).fill(0.3));
+  const [volume, setVolume] = useState(0.3);
 
   useEffect(() => {
     if (!audioStream || !isActive) return;
@@ -18,14 +18,12 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
     let audioContext: AudioContext | null = null;
 
     try {
-      // Try to create AudioContext with fallback
       const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
 
       if (!AudioContextClass) {
         console.log('AudioContext not supported, using fallback animation');
-        // Fallback: simple animation without audio analysis
         const animate = () => {
-          setBars(prev => prev.map(() => 0.3 + Math.random() * 0.7));
+          setVolume(0.3 + Math.random() * 0.5);
           animationId = requestAnimationFrame(animate);
         };
         animate();
@@ -45,46 +43,37 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
       const bufferLength = analyser.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
 
-      const updateBars = () => {
+      const updateVolume = () => {
         if (!analyser || !isActive) return;
 
         analyser.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+        const normalizedVolume = Math.min(1, (average / 255) * 2.5 + 0.2);
 
-        // Convert frequency data to bar heights with more variation
-        const newBars = Array(60).fill(0).map((_, i) => {
-          const index = Math.floor((i / 60) * bufferLength);
-          const value = dataArray[index] || 0;
-          // Increase sensitivity and range for more prominent waveform effect
-          return Math.min(1, (value / 255) * 2.5 + 0.2);
-        });
-
-        setBars(newBars);
-        animationId = requestAnimationFrame(updateBars);
+        setVolume(normalizedVolume);
+        animationId = requestAnimationFrame(updateVolume);
       };
 
-      // Resume audio context if suspended (required for mobile)
       if (audioContext.state === 'suspended') {
         audioContext.resume().then(() => {
           console.log('AudioContext resumed');
-          updateBars();
+          updateVolume();
         }).catch(err => {
           console.error('Failed to resume AudioContext:', err);
-          // Fallback animation with more variation
           const animate = () => {
-            setBars(prev => prev.map(() => 0.2 + Math.random() * 0.8));
+            setVolume(0.3 + Math.random() * 0.5);
             animationId = requestAnimationFrame(animate);
           };
           animate();
         });
       } else {
-        updateBars();
+        updateVolume();
       }
 
     } catch (error) {
       console.error('Error setting up audio visualization:', error);
-      // Fallback: animation with more variation
       const animate = () => {
-        setBars(prev => prev.map(() => 0.2 + Math.random() * 0.8));
+        setVolume(0.3 + Math.random() * 0.5);
         animationId = requestAnimationFrame(animate);
       };
       animate();
@@ -103,25 +92,62 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
   if (!isActive) return null;
 
   return (
-    <div className="flex-1 flex items-center justify-center gap-0.5 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 py-3 border-2 border-blue-400 dark:border-blue-600">
-      {bars.map((height, i) => {
-        // Create vertical movement based on height for wave effect
-        const verticalOffset = (height - 0.5) * 20; // -10px to +10px movement
-        return (
-          <div
-            key={i}
-            className="flex-1 rounded-sm transition-all duration-50"
-            style={{
-              height: `${height * 100}%`,
-              maxHeight: '56px',
-              minHeight: '8px',
-              transform: `translateY(${verticalOffset}px)`,
-              background: 'linear-gradient(to top, #2563EB, #3B82F6, #60A5FA)',
-              boxShadow: height > 0.7 ? '0 0 10px rgba(59, 130, 246, 0.8)' : 'none',
-            }}
+    <div className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 py-3 border-2 border-blue-400 dark:border-blue-600">
+      <div className="relative flex items-center justify-center" style={{ width: '80px', height: '80px' }}>
+        {/* Outer pulsing ring */}
+        <div
+          className="absolute rounded-full bg-blue-500/20 transition-all duration-100"
+          style={{
+            width: `${60 + volume * 40}px`,
+            height: `${60 + volume * 40}px`,
+          }}
+        />
+
+        {/* Middle pulsing ring */}
+        <div
+          className="absolute rounded-full bg-blue-500/30 transition-all duration-100"
+          style={{
+            width: `${50 + volume * 30}px`,
+            height: `${50 + volume * 30}px`,
+          }}
+        />
+
+        {/* Inner pulsing ring */}
+        <div
+          className="absolute rounded-full bg-blue-500/40 transition-all duration-100"
+          style={{
+            width: `${40 + volume * 20}px`,
+            height: `${40 + volume * 20}px`,
+          }}
+        />
+
+        {/* Center circle */}
+        <div
+          className="absolute rounded-full bg-blue-600 shadow-lg transition-all duration-100"
+          style={{
+            width: `${30 + volume * 10}px`,
+            height: `${30 + volume * 10}px`,
+            boxShadow: `0 0 ${volume * 20}px rgba(59, 130, 246, 0.6)`,
+          }}
+        />
+
+        {/* Microphone icon */}
+        <svg
+          className="relative z-10 text-white"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
           />
-        );
-      })}
+        </svg>
+      </div>
     </div>
   );
 }

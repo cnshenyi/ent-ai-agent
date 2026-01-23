@@ -42,7 +42,7 @@ export default function Home() {
     if (savedDarkMode) setDarkMode(JSON.parse(savedDarkMode));
 
     // Force clear old cache and update service worker
-    const APP_VERSION = '3.2.0'; // Update this to force cache clear
+    const APP_VERSION = '3.3.0'; // Update this to force cache clear
     const currentVersion = localStorage.getItem('appVersion');
 
     if (currentVersion !== APP_VERSION) {
