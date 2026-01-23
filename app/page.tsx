@@ -222,36 +222,6 @@ export default function Home() {
     }
   };
 
-      recorder.ondataavailable = (e) => chunks.push(e.data);
-
-      recorder.onstop = async () => {
-        setIsListening(false);
-        stream.getTracks().forEach(t => t.stop());
-
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        const formData = new FormData();
-        formData.append('file', blob, 'audio.webm');
-
-        try {
-          const res = await fetch('/api/speech', { method: 'POST', body: formData });
-          const data = await res.json();
-          console.log('Speech response:', res.status, data);
-          if (data.text) setInput(data.text);
-          else alert(data.error || '语音识别失败');
-        } catch (err) {
-          console.error('Speech error:', err);
-          alert('语音识别服务暂时不可用');
-        }
-      };
-
-      recorder.start();
-      mediaRecorderRef.current = recorder;
-      setIsListening(true);
-    } catch {
-      alert('无法访问麦克风');
-    }
-  };
-
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -506,9 +476,6 @@ export default function Home() {
                   </button>
                 </div>
               )}
-
-              <button
-              </div>
 
               <button
                 onClick={() => sendMessage(input, selectedImages)}
