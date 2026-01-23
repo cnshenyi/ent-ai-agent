@@ -41,6 +41,41 @@ export default function Home() {
     const savedDarkMode = localStorage.getItem('darkMode');
     if (savedDarkMode) setDarkMode(JSON.parse(savedDarkMode));
 
+    // Force clear old cache and update service worker
+    const APP_VERSION = '3.0.0'; // Update this to force cache clear
+    const currentVersion = localStorage.getItem('appVersion');
+
+    if (currentVersion !== APP_VERSION) {
+      console.log('New version detected, clearing caches...');
+
+      // Clear all caches
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => {
+            console.log('Deleting cache:', name);
+            caches.delete(name);
+          });
+        });
+      }
+
+      // Unregister all service workers
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => {
+            console.log('Unregistering service worker');
+            registration.unregister();
+          });
+        });
+      }
+
+      // Save new version and reload
+      localStorage.setItem('appVersion', APP_VERSION);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      return;
+    }
+
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
