@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface VoiceWaveformProps {
   isActive: boolean;
@@ -8,132 +8,112 @@ interface VoiceWaveformProps {
 }
 
 export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number | undefined>(undefined);
-  const analyserRef = useRef<AnalyserNode | undefined>(undefined);
-  const audioContextRef = useRef<AudioContext | undefined>(undefined);
-  const [canvasSize, setCanvasSize] = useState({ width: 600, height: 60 });
-
-  // Update canvas size based on container
-  useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        const width = containerRef.current.clientWidth;
-        const height = 60;
-        setCanvasSize({ width, height });
-      }
-    };
-
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
+  const [bars, setBars] = useState<number[]>(Array(20).fill(0.3));
 
   useEffect(() => {
-    if (!audioStream || !canvasRef.current || !isActive) return;
+    if (!audioStream || !isActive) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    let animationId: number;
+    let analyser: AnalyserNode | null = null;
+    let audioContext: AudioContext | null = null;
 
-    // Create AudioContext with proper initialization for mobile
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    const audioContext = new AudioContextClass();
-    audioContextRef.current = audioContext;
+    try {
+      // Try to create AudioContext with fallback
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
 
-    const analyser = audioContext.createAnalyser();
-    const source = audioContext.createMediaStreamSource(audioStream);
-
-    analyser.fftSize = 256;
-    analyser.smoothingTimeConstant = 0.8;
-    source.connect(analyser);
-    analyserRef.current = analyser;
-
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const draw = () => {
-      if (!isActive) return;
-
-      animationRef.current = requestAnimationFrame(draw);
-      analyser.getByteFrequencyData(dataArray);
-
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Calculate average volume
-      const average = dataArray.reduce((a, b) => a + b) / bufferLength;
-
-      // Draw waveform bars
-      const barCount = Math.min(40, Math.floor(canvas.width / 15)); // Adaptive bar count
-      const barWidth = canvas.width / barCount;
-      const centerY = canvas.height / 2;
-
-      for (let i = 0; i < barCount; i++) {
-        const dataIndex = Math.floor((i / barCount) * bufferLength);
-        const value = dataArray[dataIndex] || 0;
-
-        // Normalize and add some minimum height
-        const normalizedValue = (value / 255) * 0.8 + 0.2;
-        const barHeight = normalizedValue * (canvas.height * 0.8);
-
-        // Create gradient
-        const gradient = ctx.createLinearGradient(0, centerY - barHeight/2, 0, centerY + barHeight/2);
-        gradient.addColorStop(0, '#6366F1');
-        gradient.addColorStop(0.5, '#A855F7');
-        gradient.addColorStop(1, '#06B6D4');
-
-        ctx.fillStyle = gradient;
-
-        // Draw bar with rounded corners
-        const x = i * barWidth + barWidth * 0.2;
-        const width = barWidth * 0.6;
-        const y = centerY - barHeight / 2;
-
-        ctx.beginPath();
-        ctx.roundRect(x, y, width, barHeight, width / 2);
-        ctx.fill();
+      if (!AudioContextClass) {
+        console.log('AudioContext not supported, using fallback animation');
+        // Fallback: simple animation without audio analysis
+        const animate = () => {
+          setBars(prev => prev.map(() => 0.2 + Math.random() * 0.8));
+          animationId = requestAnimationFrame(animate);
+        };
+        animate();
+        return () => cancelAnimationFrame(animationId);
       }
 
-      // Add glow effect
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = average > 50 ? '#A855F7' : '#6366F1';
-    };
+      audioContext = new AudioContextClass();
+      analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaStreamSource(audioStream);
 
-    // Resume AudioContext for mobile (required by some browsers)
-    if (audioContext.state === 'suspended') {
-      audioContext.resume().then(() => {
-        draw();
-      });
-    } else {
-      draw();
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const updateBars = () => {
+        if (!analyser || !isActive) return;
+
+        analyser.getByteFrequencyData(dataArray);
+
+        // Convert frequency data to bar heights
+        const newBars = Array(20).fill(0).map((_, i) => {
+          const index = Math.floor((i / 20) * bufferLength);
+          const value = dataArray[index] || 0;
+          return (value / 255) * 0.8 + 0.2;
+        });
+
+        setBars(newBars);
+        animationId = requestAnimationFrame(updateBars);
+      };
+
+      // Resume audio context if suspended (required for mobile)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          console.log('AudioContext resumed');
+          updateBars();
+        }).catch(err => {
+          console.error('Failed to resume AudioContext:', err);
+          // Fallback animation
+          const animate = () => {
+            setBars(prev => prev.map(() => 0.2 + Math.random() * 0.8));
+            animationId = requestAnimationFrame(animate);
+          };
+          animate();
+        });
+      } else {
+        updateBars();
+      }
+
+    } catch (error) {
+      console.error('Error setting up audio visualization:', error);
+      // Fallback: simple animation
+      const animate = () => {
+        setBars(prev => prev.map(() => 0.2 + Math.random() * 0.8));
+        animationId = requestAnimationFrame(animate);
+      };
+      animate();
     }
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
       }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
+      if (audioContext) {
+        audioContext.close().catch(console.error);
       }
     };
-  }, [audioStream, isActive, canvasSize]);
+  }, [audioStream, isActive]);
 
   if (!isActive) return null;
 
   return (
-    <div
-      ref={containerRef}
-      className="flex-1 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 py-3 border-2 border-indigo-300 dark:border-indigo-600"
-    >
-      <canvas
-        ref={canvasRef}
-        width={canvasSize.width}
-        height={canvasSize.height}
-        className="w-full"
-        style={{ maxHeight: '60px', display: 'block' }}
-      />
+    <div className="flex-1 flex items-center justify-center gap-1 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 py-3 border-2 border-indigo-300 dark:border-indigo-600">
+      {bars.map((height, i) => (
+        <div
+          key={i}
+          className="flex-1 rounded-full transition-all duration-100"
+          style={{
+            height: `${height * 100}%`,
+            maxHeight: '40px',
+            minHeight: '8px',
+            background: 'linear-gradient(to bottom, #6366F1, #A855F7, #06B6D4)',
+            boxShadow: height > 0.5 ? '0 0 10px rgba(168, 85, 247, 0.5)' : 'none',
+          }}
+        />
+      ))}
     </div>
   );
 }
