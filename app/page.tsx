@@ -46,6 +46,23 @@ export default function Home() {
         .register('/sw.js')
         .then((registration) => {
           console.log('Service Worker registered:', registration);
+
+          // Check for updates every time the page loads
+          registration.update();
+
+          // Listen for new service worker
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New service worker available, reload to activate
+                  console.log('New version available! Reloading...');
+                  window.location.reload();
+                }
+              });
+            }
+          });
         })
         .catch((error) => {
           console.log('Service Worker registration failed:', error);

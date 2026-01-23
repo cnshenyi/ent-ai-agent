@@ -1,5 +1,5 @@
 // Service Worker for PWA
-const CACHE_NAME = 'xu-geng-doctor-v1';
+const CACHE_NAME = 'xu-geng-doctor-v3'; // Updated version to force cache refresh
 const urlsToCache = [
   '/',
   '/icon.svg',
