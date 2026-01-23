@@ -33,6 +33,8 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
       }
 
       audioContext = new AudioContextClass();
+      if (!audioContext) return;
+
       analyser = audioContext.createAnalyser();
       const source = audioContext.createMediaStreamSource(audioStream);
 
