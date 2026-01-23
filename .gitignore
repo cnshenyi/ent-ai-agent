@@ -1,3 +1,9 @@
 node_modules
 .next
 .env*.local
+.cert
+.DS_Store
+*.log
+generate-icons.html
+generate-icons.js
+generate-icons-sharp.js
