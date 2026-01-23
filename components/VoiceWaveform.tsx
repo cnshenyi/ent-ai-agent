@@ -92,45 +92,55 @@ export default function VoiceWaveform({ isActive, audioStream, onStop }: VoiceWa
 
   if (!isActive) return null;
 
-  // Create multiple circles distributed across the width
-  const circles = Array.from({ length: 8 }, (_, i) => {
-    const baseSize = 8 + i * 2;
-    const size = baseSize + volume * (12 + i * 2);
-    const opacity = 0.15 + volume * 0.3 - i * 0.02;
-    return { size, opacity };
-  });
-
   return (
     <button
       onClick={onStop}
-      className="flex-1 flex items-center justify-center gap-3 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 border-2 border-blue-400 dark:border-blue-600 cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-all relative overflow-hidden"
-      style={{
-        height: '44px',
-        boxShadow: `0 0 ${volume * 20}px rgba(59, 130, 246, ${volume * 0.3})`
-      }}
+      className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 border-2 border-blue-400 dark:border-blue-600 cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-all relative overflow-hidden"
+      style={{ height: '44px' }}
       title="点击结束录音"
     >
-      {/* Background pulse effect */}
+      {/* Center dot */}
       <div
-        className="absolute inset-0 bg-blue-400/10 dark:bg-blue-500/10 transition-all duration-100"
+        className="absolute rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-100 z-10"
         style={{
-          opacity: volume * 0.5,
+          width: `${8 + volume * 8}px`,
+          height: `${8 + volume * 8}px`,
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
         }}
       />
 
-      {/* Distributed circles */}
-      {circles.map((circle, i) => (
+      {/* Expanding rings */}
+      {[0, 1, 2].map((i) => (
         <div
           key={i}
-          className="rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-100"
+          className="absolute rounded-full border-2 border-blue-500 dark:border-blue-400"
           style={{
-            width: `${circle.size}px`,
-            height: `${circle.size}px`,
-            opacity: circle.opacity,
-            boxShadow: volume > 0.6 ? `0 0 ${volume * 8}px rgba(59, 130, 246, 0.4)` : 'none',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            animation: `ripple ${1.5 + volume * 0.5}s ease-out infinite`,
+            animationDelay: `${i * 0.5}s`,
+            opacity: 0,
           }}
         />
       ))}
+
+      <style jsx>{`
+        @keyframes ripple {
+          0% {
+            width: 16px;
+            height: 16px;
+            opacity: ${volume * 0.8};
+          }
+          100% {
+            width: 200px;
+            height: 200px;
+            opacity: 0;
+          }
+        }
+      `}</style>
     </button>
   );
 }
