@@ -7,3 +7,4 @@ node_modules
 generate-icons.html
 generate-icons.js
 generate-icons-sharp.js
+.vercel
