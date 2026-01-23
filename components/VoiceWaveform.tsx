@@ -50,11 +50,12 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
 
         analyser.getByteFrequencyData(dataArray);
 
-        // Convert frequency data to bar heights
+        // Convert frequency data to bar heights with more variation
         const newBars = Array(20).fill(0).map((_, i) => {
           const index = Math.floor((i / 20) * bufferLength);
           const value = dataArray[index] || 0;
-          return (value / 255) * 0.8 + 0.2;
+          // Increase sensitivity and range for more prominent effect
+          return Math.min(1, (value / 255) * 1.5 + 0.15);
         });
 
         setBars(newBars);
@@ -68,9 +69,9 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
           updateBars();
         }).catch(err => {
           console.error('Failed to resume AudioContext:', err);
-          // Fallback animation
+          // Fallback animation with more variation
           const animate = () => {
-            setBars(prev => prev.map(() => 0.2 + Math.random() * 0.8));
+            setBars(prev => prev.map(() => 0.15 + Math.random() * 0.85));
             animationId = requestAnimationFrame(animate);
           };
           animate();
@@ -81,9 +82,9 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
 
     } catch (error) {
       console.error('Error setting up audio visualization:', error);
-      // Fallback: simple animation
+      // Fallback: animation with more variation
       const animate = () => {
-        setBars(prev => prev.map(() => 0.2 + Math.random() * 0.8));
+        setBars(prev => prev.map(() => 0.15 + Math.random() * 0.85));
         animationId = requestAnimationFrame(animate);
       };
       animate();
@@ -102,17 +103,17 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
   if (!isActive) return null;
 
   return (
-    <div className="flex-1 flex items-center justify-center gap-1 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 py-3 border-2 border-indigo-300 dark:border-indigo-600">
+    <div className="flex-1 flex items-center justify-center gap-1 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 py-3 border-2 border-blue-400 dark:border-blue-600">
       {bars.map((height, i) => (
         <div
           key={i}
-          className="flex-1 rounded-full transition-all duration-100"
+          className="flex-1 rounded-full transition-all duration-75"
           style={{
             height: `${height * 100}%`,
-            maxHeight: '40px',
-            minHeight: '8px',
-            background: 'linear-gradient(to bottom, #6366F1, #A855F7, #06B6D4)',
-            boxShadow: height > 0.5 ? '0 0 10px rgba(168, 85, 247, 0.5)' : 'none',
+            maxHeight: '48px',
+            minHeight: '4px',
+            background: '#3B82F6', // Single blue color
+            boxShadow: height > 0.6 ? '0 0 8px rgba(59, 130, 246, 0.6)' : 'none',
           }}
         />
       ))}

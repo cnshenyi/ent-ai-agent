@@ -23,6 +23,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<'chat' | 'symptom' | 'history'>('chat');
   const [isListening, setIsListening] = useState(false);
+  const [isProcessingSpeech, setIsProcessingSpeech] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [darkMode, setDarkMode] = useState(false);
   const [showDoctorProfile, setShowDoctorProfile] = useState(false);
@@ -182,6 +183,9 @@ export default function Home() {
           silenceTimerRef.current = null;
         }
 
+        // Show processing state
+        setIsProcessingSpeech(true);
+
         const blob = new Blob(chunks, { type: 'audio/webm' });
         const formData = new FormData();
         formData.append('file', blob, 'audio.webm');
@@ -195,6 +199,8 @@ export default function Home() {
         } catch (err) {
           console.error('Speech error:', err);
           alert('语音识别服务暂时不可用');
+        } finally {
+          setIsProcessingSpeech(false);
         }
       };
 
@@ -472,6 +478,15 @@ export default function Home() {
 
               {isListening ? (
                 <VoiceWaveform isActive={isListening} audioStream={audioStream} />
+              ) : isProcessingSpeech ? (
+                <div className="flex-1 flex items-center justify-center gap-2 bg-blue-50 dark:bg-gray-700 rounded-xl px-4 py-3 border border-blue-200 dark:border-gray-600">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                    <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                    <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                  </div>
+                  <span className="text-sm text-blue-600 dark:text-blue-400">识别中...</span>
+                </div>
               ) : (
                 <div className="flex-1 flex items-center gap-1 sm:gap-2 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 sm:px-4 py-2 border border-gray-200 dark:border-gray-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-200 dark:focus-within:ring-blue-800 transition-all min-w-0">
                   <input
