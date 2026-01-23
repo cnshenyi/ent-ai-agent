@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface VoiceWaveformProps {
   isActive: boolean;
@@ -9,13 +9,39 @@ interface VoiceWaveformProps {
 
 export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
   const analyserRef = useRef<AnalyserNode | undefined>(undefined);
+  const audioContextRef = useRef<AudioContext | undefined>(undefined);
+  const [canvasSize, setCanvasSize] = useState({ width: 600, height: 60 });
+
+  // Update canvas size based on container
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.clientWidth;
+        const height = 60;
+        setCanvasSize({ width, height });
+      }
+    };
+
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
   useEffect(() => {
-    if (!audioStream || !canvasRef.current) return;
+    if (!audioStream || !canvasRef.current || !isActive) return;
 
-    const audioContext = new AudioContext();
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Create AudioContext with proper initialization for mobile
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const audioContext = new AudioContextClass();
+    audioContextRef.current = audioContext;
+
     const analyser = audioContext.createAnalyser();
     const source = audioContext.createMediaStreamSource(audioStream);
 
@@ -23,10 +49,6 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
     analyser.smoothingTimeConstant = 0.8;
     source.connect(analyser);
     analyserRef.current = analyser;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
 
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
@@ -44,7 +66,7 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
       const average = dataArray.reduce((a, b) => a + b) / bufferLength;
 
       // Draw waveform bars
-      const barCount = 40;
+      const barCount = Math.min(40, Math.floor(canvas.width / 15)); // Adaptive bar count
       const barWidth = canvas.width / barCount;
       const centerY = canvas.height / 2;
 
@@ -79,26 +101,38 @@ export default function VoiceWaveform({ isActive, audioStream }: VoiceWaveformPr
       ctx.shadowColor = average > 50 ? '#A855F7' : '#6366F1';
     };
 
-    draw();
+    // Resume AudioContext for mobile (required by some browsers)
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().then(() => {
+        draw();
+      });
+    } else {
+      draw();
+    }
 
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
-      audioContext.close();
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
     };
-  }, [audioStream, isActive]);
+  }, [audioStream, isActive, canvasSize]);
 
   if (!isActive) return null;
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 py-3 border-2 border-indigo-300 dark:border-indigo-600">
+    <div
+      ref={containerRef}
+      className="flex-1 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl px-4 py-3 border-2 border-indigo-300 dark:border-indigo-600"
+    >
       <canvas
         ref={canvasRef}
-        width={600}
-        height={60}
-        className="w-full h-full"
-        style={{ maxHeight: '60px' }}
+        width={canvasSize.width}
+        height={canvasSize.height}
+        className="w-full"
+        style={{ maxHeight: '60px', display: 'block' }}
       />
     </div>
   );
